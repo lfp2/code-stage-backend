@@ -14,7 +14,7 @@ export const getAuthorization = function (req, res) {
   var state = generateRandomString(16)
   res.cookie(STATE_KEY, state)
 
-  var scope = 'user-read-private user-read-email'
+  var scope = 'user-read-private user-read-email user-top-read'
   res.redirect(
     'https://accounts.spotify.com/authorize?' +
       querystring.stringify({
@@ -69,13 +69,13 @@ export const validateAuthorization = async function (req, res) {
 
         // use the access token to access the Spotify Web API
         request.get(options, function (error, response, body) {
-          userRef.doc(access_token).set(body)
+          userRef.doc(body.id).set(body)
           console.log(body)
         })
 
         // we can also pass the token to the browser to make requests from there
         res.redirect(
-          '/#' +
+          '/top?' +
             querystring.stringify({
               access_token: access_token,
               refresh_token: refresh_token,
