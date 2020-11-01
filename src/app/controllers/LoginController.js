@@ -2,10 +2,13 @@ const querystring = require('querystring')
 const request = require('request')
 const { generateRandomString } = require('../utils/index.js')
 const { STATE_KEY } = require('../../constants.js')
+const firebase = require('../firebase/index.js')
 
 const client_id = process.env.CLIENT_ID
 const redirect_uri = 'http://localhost:3000/callback/'
 const client_secret = process.env.CLIENT_SECRET
+const db = firebase.firestore()
+const userRef = db.collection('users')
 
 export const getAuthorization = function (req, res) {
   var state = generateRandomString(16)
@@ -24,7 +27,7 @@ export const getAuthorization = function (req, res) {
   )
 }
 
-export const validateAuthorization = function (req, res) {
+export const validateAuthorization = async function (req, res) {
   var code = req.query.code || null
   var state = req.query.state || null
   var storedState = req.cookies ? req.cookies[STATE_KEY] : null
@@ -66,6 +69,7 @@ export const validateAuthorization = function (req, res) {
 
         // use the access token to access the Spotify Web API
         request.get(options, function (error, response, body) {
+          userRef.doc(access_token).set(body)
           console.log(body)
         })
 
