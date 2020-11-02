@@ -4,16 +4,17 @@ const db = firebase.firestore()
 const tracksRef = db.collection('tracks')
 const ToneAnalyzerV3 = require('ibm-watson/tone-analyzer/v3')
 const { IamAuthenticator } = require('ibm-watson/auth')
+const userRef = db.collection('users')
 
 export const getTopSpotify = async function (req, res) {
-  const { access_token } = req.query
+  const { access_token, user_id } = req.query
   var options = {
     headers: { Authorization: 'Bearer ' + access_token },
     json: true,
   }
   try {
     const { data: topResponse } = await axios.get(
-      'https://api.spotify.com/v1/me/top/tracks',
+      'https://api.spotify.com/v1/me/top/tracks?limit=50',
       options
     )
     const { items: topTracks } = topResponse
@@ -23,10 +24,22 @@ export const getTopSpotify = async function (req, res) {
       if (!doc.exists) {
         await setTrackInfo(track, options, trackRef)
         await setLyrics(track, trackRef)
+        const newDoc = await trackRef.get()
+        await userRef
+          .doc(user_id)
+          .collection('tracks')
+          .doc(track.id)
+          .set(newDoc.data())
+      } else {
+        await userRef
+          .doc(user_id)
+          .collection('tracks')
+          .doc(track.id)
+          .set(doc.data())
       }
     })
 
-    res.status(200).send(topTracks)
+    res.status(200).send('Top Spotify adicionado ao Firebase')
   } catch (error) {
     console.log(error.message)
     res.status(500).send(error)
@@ -120,4 +133,20 @@ const setLyrics = async function (track, trackRef) {
       document_tone: toneAnalysis.result.document_tone,
     })
   }
+}
+
+export const getUserPlaylist = async function (req, res) {
+  const { user_id } = req.query
+  const snapshot = await userRef
+    .doc(user_id)
+    .collection('tracks')
+    .where('danceability', '>=', 0.6)
+    .get()
+  let tracks = []
+  snapshot.forEach((doc) => {
+    console.log(doc.data())
+    tracks.push(doc.data())
+  })
+  console.log(tracks)
+  res.json(tracks)
 }

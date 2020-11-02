@@ -64,7 +64,7 @@ export const validateAuthorization = async function (req, res) {
       res.status(200).json({
         access_token,
         refresh_token,
-        userId: body.id,
+        user_id: body.id,
       })
     } else {
       res.status(400).send('Invalid token')

@@ -7,5 +7,6 @@ const routes = new Router()
 routes.get('/login', LoginController.getAuthorization)
 routes.get('/callback', LoginController.validateAuthorization)
 routes.get('/top', UserController.getTopSpotify)
+routes.get('/danceplaylist', UserController.getUserPlaylist)
 
 module.exports = routes
